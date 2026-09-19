@@ -1,0 +1,115 @@
+trap '' INT
+
+export PATH=/usr/local/bin/middle_earth:$PATH
+cols=$(tput cols)
+if [ $cols -lt 150 ]
+then
+        echo "************************************************"
+        echo "     Your console resolution is too low."
+        echo "It needs at least 150 columns to work properly"
+        echo "       You have ${cols}                       "
+        echo "************************************************"
+        exit 1
+fi
+
+is_valid_name() {
+    local name="$1"
+    [[ "$name" =~ ^[a-zA-Z][a-zA-Z0-9_-]*$ ]]
+}
+
+mkdir -p /tmp/middle_earth
+
+pick_ansi() {
+  local hq="$1"
+  if [[ $LANG == *"UTF-8"* ]] || [[ $LC_ALL == *"UTF-8"* ]]; then
+    echo "$hq"
+  else
+    local low="${hq%.*}_low.ansi"
+    if [ -e "$low" ]; then
+      echo "$low"
+    else
+      echo "$hq"
+    fi
+  fi
+}
+
+showlines $(pick_ansi /usr/local/bin/middle_earth/data/hobbiton.ansi)
+read -n 1 -r -s -p "Press any key to continue..." key
+clear
+while true; do
+    echo ""
+    echo ""
+    echo "Welcome to Hobbiton. "
+    echo "For starting the game you should create a username"
+    echo -n "Please, enter a unique name here: "
+    read -r name
+
+    if ! is_valid_name "$name"; then
+        echo "Invalid name. It must start with a letter and only contain letters, numbers, '_' or '-'."
+        continue
+    fi
+
+    if getent passwd "$name" >/dev/null; then
+        echo "Name matches an existing system user. Try another."
+        continue
+    fi
+
+    if [[ -e "/tmp/middle_earth/$name" ]]; then
+        echo "Someone has already picked that name. Try another."
+        continue
+    fi
+
+    touch "/tmp/middle_earth/$name"
+    if [ $? -eq 0 ] 
+    then
+        IP=$(ip -4 -o addr show eth0 | awk '{print $4}' | cut -d'/' -f1)
+        clear
+        echo "************************************************************"
+        echo "**      Wait while your user is being created...          **"
+        echo "**                                                        **"
+        echo "**            It could take some seconds for              **"
+        echo "**             configuring you environment                **"
+        echo "**                                                        **"
+        echo "** Once it is ready, you will be automatically redirected **"
+        echo "**                                                        **"
+        echo "**                                                        **"
+        echo "**                  IMPORTANT TIP:                        **"
+        echo "**                                                        **"
+        echo "**   In case you exit the game, you can resume it with    **"
+        echo "**   docker exec -it -u <your_username> lotr /bin/bash    **"
+        echo "**                                                        **"
+        echo "**                                                        **"
+        echo "************************************************************"
+        echo ""
+    fi
+    echo "Testing file /tmp/middle_earth/$name exists"
+    while [ -e /tmp/middle_earth/$name ]
+    do
+        :
+    done
+    sleep 1
+    echo ""
+    break
+done
+
+sudo su - $name
+DBID=$(( `id -u $name` + 1000))
+CURRENT_STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT stage_completed FROM stages WHERE user_id = $DBID;"`
+if [ "$CURRENT_STAGE" -ge 7 ]; then
+    echo "*****************************************************************"
+    echo "*  Farewell, $name! The journey through Middle-earth is complete. *"
+    echo "*  May your roads lead ever to the sunset.                      *"
+    echo "*****************************************************************"
+else
+    if [ "$CURRENT_STAGE" -eq 0 ]; then
+        NEXT_STAGE=1
+    else
+        NEXT_STAGE=$((CURRENT_STAGE + 1))
+    fi
+    echo "*****************************************************************"
+    echo "*  To resume the game, reconnect with:                         *"
+    echo "*    docker exec -it -u $name lotr /bin/bash                   *"
+    echo "*  You were at Stage $NEXT_STAGE. Use 'helpme' for instructions.  *"
+    echo "*****************************************************************"
+fi
+exit

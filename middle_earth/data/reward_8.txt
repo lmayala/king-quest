@@ -1,0 +1,30 @@
+The Crown rests upon the brow. The White Tree blooms anew.
+The Fourth Age begins not with a battle cry, but with a
+signature on a charter — the Helm chart signed, sealed, and
+delivered to the Citadel's archives.
+
+Every province of the Reunited Kingdom now receives its
+governance as code: versioned, reviewable, rollbackable.
+The scribes of Minas Tirith no longer copy scrolls by hand;
+they `helm upgrade` and `helm rollback`.
+
+Aragorn sits upon the throne. The crown is heavy, but the
+tools are sound. The kingdom is not built on memory alone,
+but on manifests that can be read, audited, and passed to
+the next Steward.
+
+The Age of the Ring is ended. The Age of the Chart begins.
+
+You have journeyed from the Shire to the Fire, from the
+lowest Pod to the highest Release. You have learned to
+build, to scale, to watch, to heal, to persist, to schedule,
+to package, and to govern.
+
+The Shire is safe. The King is crowned. The charts are
+committed to the library.
+
+Go now. Tend your gardens. The Fourth Age is yours to
+chart.
+
+STAGE COMPLETE
+PRESS ANY KEY TO CONTINUE

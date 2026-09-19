@@ -1,0 +1,80 @@
+trap '' INT
+
+COLUMNS=$(stty size 2>/dev/null | awk '{print $2}')
+[ -z "$COLUMNS" ] && COLUMNS=$(tput cols 2>/dev/null)
+[ -z "$COLUMNS" ] && COLUMNS=80  # Fallback si todo falla
+
+if [ "$COLUMNS" -lt 150 ]; then
+        echo "************************************************"
+        echo "     Your console resolution is too low."
+        echo "It needs at least 150 columns to work properly"
+        echo "        and you have ${COLUMNS} "
+        echo "************************************************"
+        exit 1
+fi
+services=("sshd" "process_users")
+bar_length=50
+total_services=${#services[@]}
+
+progress_bar() {
+  local percent=$1
+  printf "\r[%-${bar_length}s]" "$(printf "%0.s#" $(seq 1 $(( (percent * bar_length) / 100 ))))"
+}
+
+
+
+check_docker()
+  for ((i=0; i<1; i++)); do
+    while ! docker info > /dev/null 2>&1; do
+      sleep 1
+    done
+    progress=$(( ((i + 1) * 100) / 1))
+    progress_bar $progress
+  done
+
+#check_supervisor
+#check_mysql
+#check_process
+
+clear
+
+echo ""
+echo "                  LOADING GAME OBJECTS "
+echo ""
+echo ""
+echo "Checking docker is running...."
+
+echo ""
+check_docker
+echo ""
+echo "Docker is running fine"
+
+echo ""
+echo "-----------------------------------------------"
+echo ""
+echo "Checking required services are running"
+
+echo ""
+for ((i=0; i<$total_services; i++)); do
+  while ! supervisorctl status|grep "process_users"|grep "RUNNING" > /dev/null 2>&1; do
+    sleep 1
+  done
+  while ! supervisorctl status|grep "sshd"|grep "RUNNING" > /dev/null 2>&1; do
+    sleep 1
+  done
+  progress=$(( ((i + 1) * 100) / total_services))
+  progress_bar $progress
+done
+echo ""
+echo "All services are up and running"
+echo ""
+echo ""
+echo "-----------------------------------------------"
+echo ""
+echo ""
+echo "Everything is ready for starting..."
+read -n 1 -r -s -p "Press any key to continue..." key
+echo ""
+clear
+su - hobbiton
+exit

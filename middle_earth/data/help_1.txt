@@ -1,0 +1,66 @@
+=== STAGE 1: THE LIGHTING OF THE BEACONS ===
+
+Gondor's Steward Denethor demands his vassals prepare their strongholds.
+But first, he must create the realms these commanders will govern.
+Each domain must exist separately: no confusion between Gondor and Rohan.
+These are your Namespaces. They are the foundation of order in a large kingdom.
+
+From the heights of Minas Tirith, the first flame rises,
+a column of fire piercing the gathering dark.
+Amon Dîn answers. Eilenach. Nardol. Erelas.
+Min-Rimmon. Calenhad. Halifirien.
+
+Seven beacons across the border mountains, calling the Rohirrim
+to honour their ancient oath. Rohan's king Théoden sends word back
+from the plains: send scouts to each realm to report that preparations
+are underway. These scouts are your Pods. They carry information back
+to the Steward.
+
+OBJECTIVE:
+
+Set up two isolated realms and dispatch named and labeled scouts to each one.
+In Gondor, every mountain peak needs its own beacon, eight in total,
+one for Minas Tirith and seven for the signal chain. In Rohan, one
+scout marks where the Rohirrim muster.
+
+To organize our tracking, the Steward demands that every scout Pod be
+explicitly tagged with a label identifying its faction:
+- Gondor scouts must have the label: 'realm=gondor'
+- Rohan scouts must have the label:   'realm=rohan'
+
+REQUIRED SETUP:
+
+Gondor namespace ('gondor') — 8 scouts (all with label 'realm=gondor'):
+  - 'beacon-minas-tirith'   (the White City, where the Steward rules)
+  - 'beacon-amon-din'       (highest peak, first to see the enemy)
+  - 'beacon-eilenach'       (westernmost watchpost)
+  - 'beacon-nardol'         (crossings of the Poros)
+  - 'beacon-erelas'         (field of Lebethron trees)
+  - 'beacon-min-rimmon'     (eastern sentinel on the Meringue)
+  - 'beacon-calenhad'       (the Great Plain overlooking the Entwash)
+  - 'beacon-halifirien'     (holy hill where the oath was sworn)
+
+Rohan namespace ('rohan') — 1 scout (with label 'realm=rohan'):
+  - 'beacon-edoras'          (capital of the Mark, far across Anórien)
+
+Total: 9 scouts across 2 namespaces.
+
+GUIDANCE:
+
+- Use 'kubectl get <resource>' to understand what exists before you act.
+  This is how every operator learns their system.
+
+- Every resource has a namespace, if you don't specify one, it goes to
+  'default'. Creating resources in separate namespaces keeps everything
+  properly isolated.
+
+- Use 'kubectl run --help' to discover options for creating Pods.
+  You will need the '--labels' flag (e.g. '--labels=realm=gondor') to tag them.
+  Try '--dry-run=client' to preview without committing anything first.
+  Create scouts one by one, placing each into its correct namespace.
+
+- When something isn't working as expected, 'kubectl describe <resource>'
+  shows events that explain what went wrong.
+
+When all nine scouts are active and correctly labeled in their respective
+realms, run 'check_beacons' to report the Steward's success.

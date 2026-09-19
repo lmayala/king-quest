@@ -1,0 +1,19 @@
+The Ring is gone. The Enemy is fallen. The Black Gate collapses.
+Minas Tirith stands quiet under a new sunrise.
+
+Aragorn stands before the White Tree. The crown of Elendil is
+brought forth. The standard of the King unfurls. The city does
+not just cheer — it organizes. A kingdom must be governed.
+
+What was built for war must now serve peace. The infrastructure
+that held the line must now serve the realm: configurable,
+repeatable, versioned. The tools of war become the tools of
+governance.
+
+Helm charts. Values files. Releases. Rollbacks. The King's
+decrees, codified and deployable across every realm of the
+Reunited Kingdom.
+
+This is the final lesson: infrastructure that served war
+must now serve peace — and it must be manageable by those
+who come after.

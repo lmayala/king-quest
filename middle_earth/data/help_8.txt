@@ -1,0 +1,75 @@
+=== STAGE 8: THE CORONATION — HELM ===
+
+The crown rests upon Aragorn's brow. The White Tree blooms.
+But a kingdom is not ruled by a crown alone — it is ruled by
+decrees that can be read, copied, and enforced across every
+province from Dol Amroth to the Sea of Rhûn.
+
+In Kubernetes, **Helm** is the package manager that turns
+complex manifests into reusable, configurable, versioned
+charts. It is the scribe's desk for the King's edicts.
+
+OBJECTIVE:
+
+Package the entire King's Quest infrastructure as a Helm chart
+and deploy it as a single release — the Coronation Release.
+
+REQUIRED SETUP:
+
+1. **Install Helm** (if not present).
+   `curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash`
+
+2. **Create a Helm chart** named `coronation`:
+   ```
+   helm create coronation
+   ```
+
+3. **Package the King's Quest resources** into the chart:
+   - All 7 namespaces: `hobbiton`, `gondor`, `rohan`, `mordor`, `cirith-ungol`, `black-gate`, `mount-doom`, `mordor`
+   - All resources: Deployments, Services, Ingresses, StatefulSets,
+     Jobs, CronJobs, Secrets, ConfigMaps, HPAs
+   - Use `helm template` and `kubectl get ... -o yaml` to extract
+     each resource, then place into `templates/` with proper
+     naming and labels.
+
+3. **Values file** (`values.yaml`):
+   - Make replica counts, resource limits, image tags, and
+     namespace names configurable
+   - Provide sensible defaults matching what you built
+   - Include an `enabled` toggle for each component
+
+4. **Helm hooks**:
+   - `pre-install`: create namespaces
+   - `post-install`: run `check_` scripts as Jobs to validate
+   - `pre-delete`: run cleanup Jobs
+
+5. **Package and install**:
+   ```
+   helm package coronation
+   helm install aragorn coronation-<version>.tgz --create-namespace --namespace gונדור
+   ```
+
+5. **Verify the release**:
+   ```
+   helm list -n gondor
+   helm status aragorn
+   kubectl get all -n gondor
+   ```
+
+6. **Rollback test**:
+   - Change a value (e.g., replica count)
+   - `helm upgrade aragorn coronation --set replicaCount=5`
+   - Verify change
+   - `helm rollback aragorn 1`
+   - Verify rollback
+
+GUIDANCE:
+
+- `helm create` scaffolds a chart structure
+- `helm lint coronation` validates the chart
+- `helm template coronation` renders manifests without installing
+- Use `--dry-run` to preview changes
+- Store the chart in a git repository — the King's library
+
+When the release `aragorn` is installed, healthy, and a rollback
+has been tested, run `check_coronation` to claim the Crown.

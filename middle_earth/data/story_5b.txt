@@ -1,0 +1,11 @@
+The Wisdom of Galadriel: Secrets and Guidance
+
+The Fellowship, weary from their journey through Moria, finds refuge in the mystical realm of Lothlórien, the golden 
+wood. Here, they are welcomed by Galadriel, the Lady of Light, whose wisdom and foresight are unparalleled.
+
+Galadriel offers guidance and a glimpse into the hearts of the Fellowship. She tests their resolve and reveals the 
+hidden strengths and fears within them. In this realm of ancient power and subtle enchantments, understanding what is 
+revealed and what must remain hidden becomes crucial.
+
+Your task is to help establish a secure way for Galadriel's wisdom (her message) and her more hidden insights (secrets) 
+to be managed, ensuring that only those meant to access them can do so.

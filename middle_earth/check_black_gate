@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# King Quest Stage 6 Validation: The Black Gate
+# Verifies Deployment with Liveness/Readiness probes and HPA exist in 'black-gate'
+
+DBID=$(( `id -u` + 1000))
+
+# Check if Stage 6 is already completed
+CURRENT_STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT COALESCE(stage_completed, 0) FROM stages WHERE user_id = $DBID;"`
+if [ "$CURRENT_STAGE" -ge 6 ]; then
+    echo "Stage 6 already completed. Run 'welcome' to continue."
+    exit 0
+fi
+
+echo "Checking the Black Gate defenses..."
+
+# Check namespace exists
+if ! kubectl get namespace black-gate >/dev/null 2>&1; then
+    echo "❌ Realm 'black-gate' not found. Create it with: kubectl create namespace black-gate"
+    exit 1
+fi
+echo "✅ Realm 'black-gate' established"
+
+# Check Deployment exists
+if ! kubectl get deployment defense-line -n black-gate >/dev/null 2>&1; then
+    echo "❌ Deployment 'defense-line' not found in 'black-gate'."
+    exit 1
+fi
+echo "✅ Deployment 'defense-line' maintains the watch"
+
+# ----------- Liveness Probe Check ----------
+LIVENESS=$(kubectl get deployment defense-line -n black-gate -o jsonpath='{.spec.template.spec.containers[0].livenessProbe}' 2>/dev/null)
+if [ -z "$LIVENESS" ] || [ "$LIVENESS" = "{}" ]; then
+    echo "❌ Deployment 'defense-line' has no livenessProbe — a sentry dies without knowing."
+    echo "   Configure .spec.template.spec.containers[0].livenessProbe with an exec or httpGet handler."
+    exit 1
+fi
+echo "✅ Liveness probe watches the posts (restart on death)"
+
+# ----------- Readiness Probe Check ----------
+READINESS=$(kubectl get deployment defense-line -n black-gate -o jsonpath='{.spec.template.spec.containers[0].readinessProbe}' 2>/dev/null)
+if [ -z "$READINESS" ] || [ "$READINESS" = "{}" ]; then
+    echo "❌ Deployment 'defense-line' has no readinessProbe — unready sentries rush to the wall too soon."
+    echo "   Configure .spec.template.spec.containers[0].readinessProbe with an exec or httpGet handler."
+    exit 1
+fi
+echo "✅ Readiness probe holds the gate (not-ready = not serving)"
+
+# Verify readiness probe actually has a valid spec
+if ! echo "$READINESS" | grep -q 'httpGet\|exec\|tcpSocket'; then
+    echo "❌ Readiness probe is empty or invalid."
+    exit 1
+fi
+
+# ----------- HPA Check ----------
+HPA_LIST=$(kubectl get hpa -n black-gate --no-headers 2>/dev/null | wc -l)
+if [ "$HPA_LIST" -lt "1" ]; then
+    echo "❌ No HPA found in 'black-gate' realm."
+    echo "   Create one with: kubectl autoscale deployment defense-line --min=2 --max=6 --cpu-percent=80 -n black-gate"
+    exit 1
+fi
+
+HPA_COUNT=$(kubectl get hpa -n black-gate -o name | wc -l)
+echo "✅ $HPA_COUNT HPA(s) active in 'black-gate' realm watching the line"
+
+
+# Verify Deployment replicas are currently ready
+CURRENT_REPS=$(kubectl get deployment defense-line -n black-gate -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+if [ -z "$CURRENT_REPS" ] || [ "$CURRENT_REPS" -lt 2 ]; then
+    echo "❌ 'defense-line' has only ${CURRENT_REPS:-0} scouts ready. Need at least 2."
+    exit 1
+fi
+echo "✅ Currently ${CURRENT_REPS} scouts keeping watch"
+
+# All checks passed - update stage
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "UPDATE stages SET stage_completed = 6 WHERE user_id = $DBID;"
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR IGNORE INTO users VALUES ($DBID);"
+
+echo ""
+echo "*****************************************************"
+echo "** Stage 6 (The Black Gate) completed! **"
+echo "*****************************************************"
+echo ""
+
+cat /usr/local/bin/middle_earth/data/reward_6.txt
+echo ""
+
+read -n 1 -r -s -p "Press any key to continue..." key
+welcome
+exit 0

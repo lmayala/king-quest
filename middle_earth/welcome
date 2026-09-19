@@ -1,0 +1,127 @@
+#!/bin/bash
+trap '' 2
+SRC=/usr/local/bin/middle_earth
+DATA=$SRC/data
+DBID=$(( `id -u` + 1000))
+STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT stage_completed + 1 FROM stages WHERE user_id = $DBID;"`
+
+function keypause () {
+
+	read -n 1 -r -s -p "Press any key to continue..." key
+}
+
+pick_ansi() {
+  local hq="$1"
+  if [[ $LANG == *"UTF-8"* ]] || [[ $LC_ALL == *"UTF-8"* ]]; then
+    echo "$hq"
+  else
+    local low="${hq%.*}_low.ansi"
+    if [ -e "$low" ]; then
+      echo "$low"
+    else
+      echo "$hq"
+    fi
+  fi
+}
+
+if [ `tput cols` -lt 150 ]
+then
+	echo "************************************************"
+	echo "     Your console resolution is too low."
+	echo "It needs at least 150 columns to work properly"
+	echo "************************************************"
+	exit 1
+fi
+
+clear
+if [ "$STAGE" == "1" ] 
+then
+   showlines $(pick_ansi $DATA/rivendell.ansi) DELAY=0.04
+   sleep 2
+   toilet -ktf small --gay < $DATA/quote1.txt
+   keypause
+   clear
+fi
+
+if [ -e $DATA/story_${STAGE}.txt ]
+then
+    showlines $DATA/story_${STAGE}.txt
+    keypause
+fi
+
+if [ "$STAGE" == "6" ]
+then
+    showlines $DATA/story_6a.txt
+    keypause
+    ansi_file=$(pick_ansi $DATA/amon-hen.ansi)
+    if [ -e "$ansi_file" ]
+    then
+	clear
+        showlines "$ansi_file"
+        keypause
+    fi
+    clear
+    showlines $DATA/story_6b.txt
+    keypause
+fi
+
+if [ "$STAGE" == "5" ]
+then
+    showlines $DATA/story_5a.txt
+    keypause
+    ansi_file=$(pick_ansi $DATA/youshallnotpass.ansi)
+    if [ -e "$ansi_file" ]
+    then
+        clear
+        showlines "$ansi_file"
+        keypause
+    fi
+    clear
+    showlines $DATA/story_5b.txt
+    keypause
+fi
+
+if [ "$STAGE" == "4" ]
+then
+    clear
+    ansi_file=$(pick_ansi $DATA/durin.ansi)
+    if [ -e "$ansi_file" ]
+    then
+        clear
+        showlines "$ansi_file"
+        keypause
+    fi
+fi
+
+
+if [ "$STAGE" == "7" ]
+then
+ clear
+ ansi_file=$(pick_ansi $DATA/isengarddam.ansi)
+ if [ -e "$ansi_file" ]
+ then
+  clear
+  showlines "$ansi_file"
+  keypause
+ fi
+fi
+
+
+if [ "$STAGE" == "8" ]
+then
+ clear
+ ansi_file=$(pick_ansi $DATA/isengard.ansi)
+ if [ -e "$ansi_file" ]
+ then
+  clear
+  showlines "$ansi_file"
+  keypause
+  echo ""
+ fi
+ exit 0
+fi
+
+clear
+helpme
+keypause
+echo ""

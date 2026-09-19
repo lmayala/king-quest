@@ -1,0 +1,120 @@
+#!/bin/bash
+
+# King Quest Stage 4 Validation: The Battle of Pelennor Fields
+# Verifies Services (ClusterIP + NodePort) and Ingress are correctly configured in gondor
+
+DBID=$(( `id -u` + 1000))
+
+# Check if Stage 4 is already completed
+CURRENT_STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT COALESCE(stage_completed, 0) FROM stages WHERE user_id = $DBID;"`
+if [ "$CURRENT_STAGE" -ge 4 ]; then
+    echo "Stage 4 already completed. Run 'welcome' to continue."
+    exit 0
+fi
+
+echo "Checking the defenses of Pelennor..."
+
+# Check gondor namespace exists
+if ! kubectl get namespace gondor >/dev/null 2>&1; then
+    echo "❌ Realm 'gondor' not found."
+    exit 1
+fi
+echo "✅ Realm 'gondor' established"
+
+# Check beacon pods exist (find by name pattern since Deployment adds random suffix)
+for NAME_PART in beacon-minas-tirith beacon-amon-din; do
+    POD_NAME=$(kubectl get pod -n gondor --no-headers 2>/dev/null | awk '{print $1}' | grep "^$NAME_PART" | head -1)
+    if [ -z "$POD_NAME" ]; then
+        echo "❌ Beacon matching '$NAME_PART' not found in gondor."
+        exit 1
+    fi
+    STATUS=$(kubectl get pod $POD_NAME -n gondor -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
+    if [ "$STATUS" != "Running" ]; then
+        echo "❌ Beacon '$NAME_PART' ($POD_NAME) in gondor is not Running (status: $STATUS)"
+        exit 1
+    fi
+    echo "✅ Beacon '$NAME_PART' burning in gondor ($POD_NAME)"
+done
+
+# Check ClusterIP service exists
+if ! kubectl get service signal-service-internal -n gondor >/dev/null 2>&1; then
+    echo "❌ Service 'signal-service-internal' not found in gondor."
+    echo "   Create it with: kubectl expose deployment beacon-palantir --port=80 --target-port=80 --name=signal-service-internal -n gondor"
+    echo "   OR: kubectl create service clusterip signal-service-internal --tcp=80:80 -n gondor"
+    exit 1
+fi
+echo "✅ Service 'signal-service-internal' provides a stable entrance"
+
+# Check its type is ClusterIP
+SVC1_TYPE=$(kubectl get service signal-service-internal -n gondor -o jsonpath='{.spec.type}' 2>/dev/null)
+if [ "$SVC1_TYPE" != "ClusterIP" ]; then
+    echo "❌ Service 'signal-service-internal' is type $SVC1_TYPE — must be ClusterIP for internal signalling."
+    exit 1
+fi
+echo "✅ Internal service is ClusterIP (stable inner gate)"
+
+# Check NodePort service exists
+if ! kubectl get service signal-service-external -n gondor >/dev/null 2>&1; then
+    echo "❌ Service 'signal-service-external' not found in gondor."
+    echo "   Create it with: kubectl create service nodeport signal-service-external --tcp=80:80 --node-port=30007 -n gondor --selector=app=beacon-minas-tirith"
+    exit 1
+fi
+echo "✅ Service 'signal-service-external' exposed the gates"
+
+# Check its type is NodePort
+SVC2_TYPE=$(kubectl get service signal-service-external -n gondor -o jsonpath='{.spec.type}' 2>/dev/null)
+if [ "$SVC2_TYPE" != "NodePort" ]; then
+    echo "❌ Service 'signal-service-external' is type $SVC2_TYPE — must be NodePort for field rescue."
+    exit 1
+fi
+echo "✅ External service is NodePort (open field gate)"
+
+# Check Ingress exists
+if ! kubectl get ingress pelennor-ingress -n gondor >/dev/null 2>&1; then
+    echo "❌ Ingress 'pelennor-ingress' not found in gondor."
+    echo "   Create it with: kubectl create ingress pelennor-ingress --rule=\"king.quest/watch*=signal-service-internal:80\" --rule=\"king.quest/horns*=signal-service-external:80\" -n gondor"
+    exit 1
+fi
+echo "✅ Ingress 'pelennor-ingress' routes incoming riders"
+
+# Check Ingress has a load balancer (Host)
+INGRESS_HOST=$(kubectl get ingress pelennor-ingress -n gondor -o jsonpath='{.spec.rules[0].host}' 2>/dev/null)
+if [ -z "$INGRESS_HOST" ] || [ "$INGRESS_HOST" = "null" ]; then
+    echo "⚠️  Ingress has no host set (may be using default)."
+else
+    echo "✅ Ingress routes host '$INGRESS_HOST' into encampment"
+fi
+
+# Check backend services have endpoints (orthanc side)
+EP_INTERNAL=$(kubectl get endpoints signal-service-internal -n gondor -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
+if [ -z "$EP_INTERNAL" ]; then
+    echo "❌ No backend endpoints found for signal-service-internal."
+    echo "   Check that label selectors match your pods' labels."
+    exit 1
+fi
+echo "✅ Internal service has live endpoints"
+
+EP_EXTERNAL=$(kubectl get endpoints signal-service-external -n gondor -o jsonpath='{.subsets[0].addresses[0].ip}' 2>/dev/null)
+if [ -z "$EP_EXTERNAL" ]; then
+    echo "❌ No backend endpoints found for signal-service-external."
+    echo "   Check that label selectors match your pods' labels."
+    exit 1
+fi
+echo "✅ External service has live endpoints"
+
+# All checks passed - update stage
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "UPDATE stages SET stage_completed = 4 WHERE user_id = $DBID;"
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR IGNORE INTO users VALUES ($DBID);"
+
+echo ""
+echo "*******************************************************"
+echo "** Stage 4 (The Battle of Pelennor Fields) completed! **"
+echo "*******************************************************"
+echo ""
+
+cat /usr/local/bin/middle_earth/data/reward_4.txt
+echo ""
+
+read -n 1 -r -s -p "Press any key to continue..." key
+welcome
+exit 0

@@ -1,0 +1,127 @@
+#!/bin/bash
+
+# King Quest Stage 5 Validation: The Tower of Cirith Ungol
+# Verifies namespace, StatefulSet with stable identity + persistence
+
+DBID=$(( `id -u` + 1000))
+
+# Check if Stage 5 is already completed
+CURRENT_STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT COALESCE(stage_completed, 0) FROM stages WHERE user_id = $DBID;"`
+if [ "$CURRENT_STAGE" -ge 5 ]; then
+    echo "Stage 5 already completed. Run 'welcome' to continue."
+    exit 0
+fi
+
+echo "Checking the Tower of Cirith Ungol..."
+
+# Check cirith-ungol namespace exists
+if ! kubectl get namespace cirith-ungol >/dev/null 2>&1; then
+    echo "❌ Realm 'cirith-ungol' not found."
+    exit 1
+fi
+echo "✅ Realm 'cirith-ungol' has claimed its secrets"
+
+# Check StatefulSet exists — this is NOT a Deployment!
+if ! kubectl get statefulset frodo-keep -n cirith-ungol >/dev/null 2>&1; then
+    echo "❌ StatefulSet 'frodo-keep' not found in 'cirith-ungol'."
+    echo "   Forget Deployments. Build it with StatefulSet"
+    echo "   persistent identity and PVC-backed storage."
+    exit 1
+fi
+echo "✅ 'frodo-keep' stands steady — the value of StatefulSets"
+
+# Check StatefulSet readiness
+REPLICAS=$(kubectl get statefulset frodo-keep -n cirith-ungol -o jsonpath='{.spec.replicas}' 2>/dev/null)
+READY_REPLICAS=$(kubectl get statefulset frodo-keep -n cirith-ungol -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+if [ -z "$READY_REPLICAS" ] || [ "$READY_REPLICAS" -lt 2 ]; then
+    echo "❌ 'frodo-keep' has only ${READY_REPLICAS:-0} replicas running."
+    echo "   Need at least 2 guards on duty. Fix your StatefulSet's replicas: 2."
+    exit 1
+fi
+echo "✅ Guards posted: ${READY_REPLICAS} at the ready"
+
+# Make sure each has the SAME stable name pattern — frodo-keep-0, frodo-keep-1
+PODS=$(kubectl get pods -n cirith-ungol -o jsonpath='{.items[*].metadata.name}' 2>/dev/null)
+if ! echo "$PODS" | grep -q "frodo-keep-0"; then
+    echo "❌ No pod named frodo-keep-0 found. StatefulSet ordinals must be predictable."
+    echo "   Snapshot: kubectl get pods -n cirith-ungol --show-labels"
+    exit 1
+fi
+
+if ! echo "$PODS" | grep -q "frodo-keep-1"; then
+    echo "❌ No pod named frodo-keep-1 found. There should be two."
+    exit 1
+fi
+echo "✅ Garrison is stable: frodo-keep-0 and frodo-keep-1"
+
+# Note: When you delete a pod, it comes back with the same name.
+# The PersistentVolumeClaim is what keeps data alive across restarts.
+
+# Check that the file exists inside frodo-keep-0 (persistence lives there)
+if ! kubectl exec frodo-keep-0 -n cirith-ungol -- test -f /var/journal/entry.txt 2>/dev/null; then
+    echo "❌ Inside the tower, no journal entry! File /var/journal/entry.txt not found."
+    echo "   Inside the Pod, run: sh -c 'mkdir -p /var/journal && echo \"...\" > /var/journal/entry.txt'"
+    exit 1
+fi
+
+if ! kubectl exec frodo-keep-1 -n cirith-ungol -- test -f /var/journal/entry.txt 2>/dev/null; then
+    echo "❌ No journal entry in frodo-keep-1. Write it to /var/journal/entry.txt."
+    exit 1
+fi
+echo "✅ Journal entries present on both sentries."
+
+echo ""
+echo "Now testing persistence: frodo-keep-0 will be killed and allowed to return."
+
+# Kill the first replica and make sure it comes back correctly.
+kubectl delete pod frodo-keep-0 -n cirith-ungol --timeout=60s 2>&1 | head -1
+
+sleep 5
+
+# Wait until frodo-keep-0 is up again (same name)
+WAIT_LABEL=9000000
+for i in $(seq 1 10); do
+    STATUS=$(kubectl get pod frodo-keep-0 -n cirith-ungol -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
+    if [ "$STATUS" = "Running" ]; then
+        break
+    fi
+    echo "   Waiting for frodo-keep-0 to rejoin the ranks... ($i)"
+    sleep 5
+done
+
+kubectl get pod frodo-keep-0 -n cirith-ungol 2>/dev/null | tail -n +1
+
+# Re-check file contents after pod restart
+CONTENT=$(kubectl exec frodo-keep-0 -n cirith-ungol -- cat /var/journal/entry.txt 2>/dev/null)
+EXPECTED="Though the shadow lies heavy, hope remains."
+
+if [ -z "$CONTENT" ]; then
+    echo "❌ frodo-keep-0 came back but /var/journal/entry.txt is gone. Data lost."
+    echo "   Storage failed to persist across the pod's death."
+    exit 1
+fi
+
+echo "✅ Pod was reborn with the same message. Persistence proven."
+
+if echo "$CONTENT" | grep -q "hope remains"; then
+    echo "✅ Message content validated."
+else
+    echo "⚠️ Entry found but content differs from expected."
+fi
+
+# All checks passed - update stage
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "UPDATE stages SET stage_completed = 5 WHERE user_id = $DBID;"
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR IGNORE INTO users VALUES ($DBID);"
+
+echo ""
+echo "******************************************************"
+echo "** Stage 5 (The Tower of Cirith Ungol) completed! **"
+echo "******************************************************"
+echo ""
+
+cat /usr/local/bin/middle_earth/data/reward_5.txt
+echo ""
+
+read -n 1 -r -s -p "Press any key to continue..." key
+welcome
+exit 0

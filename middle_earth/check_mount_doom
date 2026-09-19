@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# King Quest Stage 7 Validation: The Fires of Mount Doom
+# Verifies the Ring's destruction Job and eternal watch CronJob exist in mordor
+
+DBID=$(( `id -u` + 1000))
+
+# Check if Stage 7 is already completed
+CURRENT_STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT COALESCE(stage_completed, 0) FROM stages WHERE user_id = $DBID;"`
+if [ "$CURRENT_STAGE" -ge 7 ]; then
+    echo "Stage 7 already completed. Run 'welcome' to continue."
+    exit 0
+fi
+
+echo "Verifying the Ring's destruction..."
+
+# Check mordor namespace exists
+if ! kubectl get namespace mordor >/dev/null 2>&1; then
+    echo "❌ Realm 'mordor' not found. Create it with: kubectl create namespace mordor"
+    exit 1
+fi
+echo "✅ Realm 'mordor' exists"
+
+# Check destroy-ring Job exists
+if ! kubectl get job destroy-ring -n mordor >/dev/null 2>&1; then
+    echo "❌ Job 'destroy-ring' not found in 'mordor'."
+    echo "   Create it with backoffLimit: 0 and restartPolicy: Never"
+    exit 1
+fi
+echo "✅ Job 'destroy-ring' exists"
+
+# Check Job has backoffLimit: 0 (no retries)
+BACKOFF=$(kubectl get job destroy-ring -n mordor -o jsonpath='{.spec.backoffLimit}' 2>/dev/null)
+if [ "$BACKOFF" != "0" ]; then
+    echo "❌ Job 'destroy-ring' has backoffLimit=$BACKOFF (must be 0 — the Ring is destroyed once, or not at all)"
+    exit 1
+fi
+echo "✅ Job 'destroy-ring' has backoffLimit: 0 (no retries — the Ring is destroyed once)"
+
+# Check Job completed successfully
+JOB_STATUS=$(kubectl get job destroy-ring -n mordor -o jsonpath='{.status.conditions[?(@.type=="Complete")].status}' 2>/dev/null)
+if [ "$JOB_STATUS" != "True" ]; then
+    echo "❌ Job 'destroy-ring' has not completed successfully (status: $JOB_STATUS)"
+    exit 1
+fi
+echo "✅ Job 'destroy-ring' completed successfully — the Ring is destroyed"
+
+# Check CronJob ring-watcher exists
+if ! kubectl get cronjob ring-watcher -n mordor >/dev/null 2>&1; then
+    echo "❌ CronJob 'ring-watcher' not found in 'mordor'."
+    echo "   Create it with schedule '* * * * *' and successfulJobsHistoryLimit: 3"
+    exit 1
+fi
+echo "✅ CronJob 'ring-watcher' exists"
+
+# Check CronJob schedule is every minute
+SCHEDULE=$(kubectl get cronjob ring-watcher -n mordor -o jsonpath='{.spec.schedule}' 2>/dev/null)
+if [ "$SCHEDULE" != "* * * * *" ]; then
+    echo "❌ CronJob 'ring-watcher' has schedule '$SCHEDULE' (must be '* * * * *' — every minute)"
+    exit 1
+fi
+echo "✅ CronJob 'ring-watcher' runs every minute"
+
+# Check successfulJobsHistoryLimit = 3
+SUCCESS_LIMIT=$(kubectl get cronjob ring-watcher -n mordor -o jsonpath='{.spec.successfulJobsHistoryLimit}' 2>/dev/null)
+if [ "$SUCCESS_LIMIT" != "3" ]; then
+    echo "❌ CronJob 'ring-watcher' has successfulJobsHistoryLimit=$SUCCESS_LIMIT (must be 3)"
+    exit 1
+fi
+echo "✅ CronJob keeps 3 successful job records"
+
+# Check failedJobsHistoryLimit = 1
+FAIL_LIMIT=$(kubectl get cronjob ring-watcher -n mordor -o jsonpath='{.spec.failedJobsHistoryLimit}' 2>/dev/null)
+if [ "$FAIL_LIMIT" != "1" ]; then
+    echo "❌ CronJob 'ring-watcher' has failedJobsHistoryLimit=$FAIL_LIMIT (must be 1)"
+    exit 1
+fi
+echo "✅ CronJob keeps 1 failed job record"
+
+# All checks passed - update stage
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "UPDATE stages SET stage_completed = 7 WHERE user_id = $DBID;"
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR IGNORE INTO users VALUES ($DBID);"
+
+echo ""
+echo "*********************************************************"
+echo "** Stage 7 (The Fires of Mount Doom) completed! **"
+echo "*********************************************************"
+echo ""
+
+cat /usr/local/bin/middle_earth/data/reward_7.txt
+echo ""
+
+read -n 1 -r -s -p "Press any key to continue..." key
+welcome
+exit 0

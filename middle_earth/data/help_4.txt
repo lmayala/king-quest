@@ -1,0 +1,76 @@
+=== STAGE 4: THE BATTLE OF PELENNOR FIELDS ===
+
+Pelennor Fields. The armies of Mordor press at the walls of Minas Tirith.
+The Rohirrim ride from the West. But their paths are broken —
+the roads are scattered.
+
+Gondor's messengers light the fires. Yet without a stable way in,
+they cannot reach the keep. You must open the city gates and let
+the army of Dawn enter from the field.
+
+Now the outer defenses need stable paths between their realms.
+Every scout-on-duty must be reachable by a stable endpoint,
+not by shifting Pod IPs that appear and vanish with every log.
+
+OBJECTIVE:
+
+Create stable communication paths between realms. Make sure the
+warning signals (scout Pods) are always reachable through Services,
+and that traffic from outside can enter through a single gate.
+
+REQUIRED SETUP:
+
+Namespaces:  gondor  (Inner Keep),  rohan  (Outer Fields)
+Pods:        beacon-minas-tirith  (in gondor)
+           beacon-amon-din      (in gondor)
+
+Step 1: Create a **ClusterIP Service** for the watchtower-scribe.
+  Name: signal-service-internal
+  Namespace: gondor
+  Selector: matches the label of the scribe pods
+  Port: 80 (listening on the inner ring)
+
+Step 2: Create a **NodePort Service** so the field outside can reach
+  the signal-scribe as well.
+  Name: signal-service-external
+  Namespace: gondor  (this is intentional — do not isolate Rohan here)
+  Type: NodePort
+  Port: 30007 → target port 80
+
+Step 3: Create an **Ingress** resource to route signals by path.
+  Name: pelennor-ingress
+  Namespace: gondor
+  Host: king.quest
+  Path: /watch   → signal-service-internal (Service of Step 1)
+  Path: /horns    → signal-service-external (Service of Step 2)
+
+Step 4: Ensure selectors and labels match.
+  Verify that the scribe pods carry the same labels used in each Service's
+  selector (for example: role=citadel-priest). If they do not match,
+  add labels to the scout pods so the services can find them.
+
+Step 5: Verify traffic flows.
+  Describe the Ingress to confirm it points to active backends.
+  Check that both Services show Endpoint addresses for real pods.
+
+GUIDANCE:
+
+- A Service's selector must exactly match the Pod's labels.
+  kubectl get pods --show-labels  can help you inspect them.
+- ClusterIP Services are only reachable inside the cluster
+  (other namespaces, other realms).
+- NodePort Services are reachable from outside the cluster
+  via the Node's IP + NodePort.
+- An Ingress without a controller does nothing — check if
+  k3s runs an ingress controller by default (it typically does).
+
+TIPS:
+
+- kubectl create service clusterip <name> --tcp=<port>:<port>
+- kubectl create service nodeport <name> --tcp=80:30007
+- kubectl create ingress <name> --rule="king.quest/watch=/signal"...
+- kubectl get endpoints -n <ns> shows which pods back a Service.
+
+When signal-service-internal and signal-service-external both have live
+Endpoints and pelennor-ingress routes both paths correctly, run
+'check_pelennor' to report gate opened.

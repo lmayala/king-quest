@@ -1,0 +1,114 @@
+#!/bin/bash
+
+# King Quest Stage 8 Validation: The Coronation — Helm
+# Verifies Helm is installed, chart exists, release is installed and healthy
+
+# Use correct kubeconfig for k3s
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+DBID=$(( `id -u` + 1000))
+
+# Check if Stage 8 is already completed
+CURRENT_STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT COALESCE(stage_completed, 0) FROM stages WHERE user_id = $DBID;"`
+if [ "$CURRENT_STAGE" -ge 8 ]; then
+    echo "Stage 8 already completed. Run 'welcome' to continue."
+    exit 0
+fi
+
+echo "Verifying the Coronation..."
+
+# Check Helm is installed
+if ! command -v helm >/dev/null 2>&1; then
+    echo "❌ Helm not installed. Install with: curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash"
+    exit 1
+fi
+HELM_VERSION=$(helm version --short 2>/dev/null || helm version --client --short 2>/dev/null)
+echo "✅ Helm installed: $HELM_VERSION"
+
+# Check chart directory exists
+if [ ! -d "/home/hobbiton/coronation" ] && [ ! -d "/root/coronation" ] && [ ! -d "/opt/coronation" ] && [ ! -d "./coronation" ]; then
+    # Search common locations
+    CHART_DIR=$(find / -maxdepth 3 -type d -name "coronation" 2>/dev/null | head -1)
+    if [ -z "$CHART_DIR" ]; then
+        echo "❌ Helm chart 'coronation' not found in common locations."
+        echo "   Create with: helm create coronation"
+        exit 1
+    fi
+else
+    CHART_DIR=$(find / -maxdepth 3 -type d -name "coronation" 2>/dev/null | head -1)
+fi
+echo "✅ Chart directory found: $CHART_DIR"
+
+# Check Chart.yaml exists and has required fields
+if [ ! -f "$CHART_DIR/Chart.yaml" ]; then
+    echo "❌ Chart.yaml not found in $CHART_DIR"
+    exit 1
+fi
+if ! grep -q "name: coronation" "$CHART_DIR/Chart.yaml"; then
+    echo "❌ Chart.yaml must have 'name: coronation'"
+    exit 1
+fi
+echo "✅ Chart.yaml valid with name: coronation"
+
+# Check templates directory exists with resources
+if [ ! -d "$CHART_DIR/templates" ] || [ -z "$(ls -A "$CHART_DIR/templates" 2>/dev/null)" ]; then
+    echo "❌ templates/ directory empty or missing"
+    exit 1
+fi
+echo "✅ Chart templates directory populated"
+
+# Check values.yaml exists
+if [ ! -f "$CHART_DIR/values.yaml" ]; then
+    echo "❌ values.yaml not found in chart"
+    exit 1
+fi
+echo "✅ values.yaml present"
+
+# Check Helm release 'aragorn' is installed
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+if ! helm list -n gondor 2>/dev/null | grep -q "aragorn"; then
+    echo "❌ Release 'aragorn' not found in namespace 'gondor'."
+    echo "   Install with: helm install aragorn <chart> -n gondor --create-namespace"
+    exit 1
+fi
+echo "✅ Release 'aragorn' installed in namespace 'gondor'"
+
+# Check release status is deployed
+RELEASE_STATUS=$(helm status aragorn -n gondor -o json 2>/dev/null | jq -r '.info.status' 2>/dev/null)
+if [ "$RELEASE_STATUS" != "deployed" ]; then
+    echo "❌ Release 'aragorn' status is '$RELEASE_STATUS' (must be 'deployed')"
+    exit 1
+fi
+echo "✅ Release 'aragorn' is deployed"
+
+# Test rollback capability (check revision history)
+REVISIONS=$(helm history aragorn -n gondor 2>/dev/null | tail -n +2 | wc -l)
+if [ "$REVISIONS" -lt 1 ]; then
+    echo "⚠️  No revision history found (need at least 1 revision for rollback test)"
+else
+    echo "✅ Release has $REVISIONS revision(s) — rollback possible"
+fi
+
+# Validate that resources from chart exist in cluster
+if ! kubectl get deployments -n gondor 2>/dev/null | grep -q "."; then
+    echo "❌ No Deployments found in 'gondor' from release"
+    exit 1
+fi
+echo "✅ Release resources present in cluster"
+
+# All checks passed - update stage
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "UPDATE stages SET stage_completed = 8 WHERE user_id = $DBID;"
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR IGNORE INTO users VALUES ($DBID);"
+
+echo ""
+echo "********************************************************"
+echo "** Stage 8 (The Coronation — Helm) completed! **"
+echo "********************************************************"
+echo ""
+
+cat /usr/local/bin/middle_earth/data/reward_8.txt
+echo ""
+
+read -n 1 -r -s -p "Press any key to continue..." key
+welcome
+exit 0

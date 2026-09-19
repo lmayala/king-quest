@@ -1,0 +1,34 @@
+=== STAGE 3: THE PATHS OF THE DEAD ===
+
+Aragorn descends beneath the mountain into realms of shadow. To claim his birthright there he needs two things: one is secret and powerful (an oath-token), and the other is open knowledge shared among all who know how to speak.
+
+In Kubernetes terms, this is what **Secrets** and **ConfigMaps** provide. A ConfigMap holds configuration data available to everyone in that realm. A Secret holds sensitive information that must stay hidden. Both can be mounted into a Pod so a scout carries them as it travels.
+
+OBJECTIVE:
+
+Carry hidden intelligence and open commands through the Paths of the Dead. You need both forms.
+
+REQUIRED SETUP:
+
+Namespace:    'gondor'                          (already exists)
+Secret:       'secret-oath-token'               key: token → value: barahir-ring
+ConfigMap:    'configmap-words-of-calling'      key: words → value: summon-the-dead
+Pod:          'beacon-palantir'                 image: nginx
+                                              Secret injected as environment variable OATH_TOKEN
+                                              ConfigMap mounted at /etc/calling
+
+GUIDANCE:
+
+1. Create the Secret using kubectl create secret with --from-literal to store the oath-token value. The Secret lives inside the gondor namespace. This is the confidential power Aragorn needs.
+
+2. Create the ConfigMap using kubectl create configmap with --from-literal to store the words of calling. This ConfigMap also lives inside the gondor namespace. Anyone in that realm may read these words.
+
+3. Deploy a scout named 'beacon-palantir' in the gondor namespace running image nginx. Configure it so that:
+   - The environment variable OATH_TOKEN comes from the Secret's token key.
+   - A volume mounts the ConfigMap's data under /etc/calling.
+
+4. Inspect the scout with 'kubectl describe pod beacon-palantir -n gondor'. In the Events section, you should see references to the Secret and ConfigMap. In the Environment Variables section, OATH_TOKEN should appear. Under Volumes you should see the ConfigMap mount.
+
+5. Execute a command on the scout to verify its cargo. Run: kubectl exec <pod-name> -n gondor -- cat /etc/calling/words to confirm the ConfigMap was mounted. Run: kubectl exec <pod-name> -n gondor -- env | grep OATH_TOKEN to confirm the Secret was injected.
+
+When the scout runs in the gondor realm carrying both cargo, run 'check_paths_of_dead' to report to Aragorn that he has his equipment for the journey below.

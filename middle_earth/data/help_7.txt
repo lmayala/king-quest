@@ -1,0 +1,47 @@
+=== STAGE 7: THE FIRES OF MOUNT DOOM ===
+
+The Ring has been carried to the Cracks of Doom. The final act is not
+a battle — it is a single command that must complete and never repeat.
+
+In Kubernetes, a **Job** is work that runs to completion and stops.
+A **CronJob** repeats on a schedule. The destruction of the Ring
+requires both: one final act, and an eternal watch.
+
+OBJECTIVE:
+
+Create the final work in the realm of Mordor.
+
+REQUIRED SETUP:
+
+1. Create the namespace `mordor` (if it does not exist).
+
+2. **Job: `cast-ring`**
+   - Runs exactly once, writes a record of the Ring's destruction
+   - Container: `busybox`, command writes `"THE RING IS DESTROYED"` to `/end/record.txt`
+   - Must use `restartPolicy: Never`
+   - Must have `backoffLimit: 0` (no retries — the Ring is destroyed once, or not at all)
+   - Job name: `destroy-ring`
+
+3. **CronJob: `ring-watcher`**
+   - Runs every minute (`* * * * *`)
+   - Creates a Job that appends a timestamped line to `/var/log/mount-doom.log`
+   - CronJob must have `successfulJobsHistoryLimit: 3`, `failedJobsHistoryLimit: 1`
+   - CronJob name: `ring-watcher`
+
+4. **Verification Record**
+   - The Job `destroy-ring` must have `backoffLimit: 0` (no retries)
+   - The CronJob `ring-watcher` must have `successfulJobsHistoryLimit: 3`
+   - Both resources must exist in namespace `mordor`
+
+GUIDANCE:
+
+- Create namespace: `kubectl create namespace mordor`
+- Create Job YAML with `restartPolicy: Never`, `backoffLimit: 0`
+- Create CronJob YAML with `schedule: "* * * * *"`, `successfulJobsHistoryLimit: 3`, `failedJobsHistoryLimit: 1`
+- Use `kubectl apply -f` to create both resources
+- Verify Job completes with `kubectl get job destroy-ring -n mordor`
+- Watch CronJob create Jobs: `kubectl get jobs -n mordor -w`
+- Check logs of completed pods: `kubectl logs <pod-name> -n mordor`
+
+When both resources exist and the Job has completed successfully,
+run `check_mount_doom` to verify the Ring's destruction.

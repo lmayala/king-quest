@@ -1,0 +1,81 @@
+#!/bin/bash
+
+# King Quest Stage 2 Validation: The Muster of Rohan
+# Verifies a Deployment exists in rohan namespace with proper replicas
+
+DBID=$(( `id -u` + 1000))
+
+# Check if Stage 2 is already completed
+CURRENT_STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT COALESCE(stage_completed, 0) FROM stages WHERE user_id = $DBID;"`
+if [ "$CURRENT_STAGE" -ge 2 ]; then
+    echo "Stage 2 already completed. Run 'welcome' to continue."
+    exit 0
+fi
+
+echo "Checking the Muster of Rohan..."
+
+# Check rohan namespace exists
+if ! kubectl get namespace rohan >/dev/null 2>&1; then
+    echo "❌ Realm 'rohan' not found. Create it with: kubectl create namespace rohan"
+    exit 1
+fi
+echo "✅ Realm 'rohan' established"
+
+# Check Deployment exists
+if ! kubectl get deployment deployment-rohirrim -n rohan >/dev/null 2>&1; then
+    echo "❌ Deployment 'deployment-rohirrim' not found in 'rohan' realm."
+    echo "   Create it with: kubectl create deployment deployment-rohirrim --image=nginx --replicas=5 -n rohan"
+    exit 1
+fi
+echo "✅ Commander 'deployment-rohirrim' leads the muster"
+
+# Check resource requests and limits are configured correctly
+CPU_REQ=$(kubectl get deployment deployment-rohirrim -n rohan -o jsonpath='{.spec.template.spec.containers[0].resources.requests.cpu}' 2>/dev/null)
+MEM_REQ=$(kubectl get deployment deployment-rohirrim -n rohan -o jsonpath='{.spec.template.spec.containers[0].resources.requests.memory}' 2>/dev/null)
+CPU_LIM=$(kubectl get deployment deployment-rohirrim -n rohan -o jsonpath='{.spec.template.spec.containers[0].resources.limits.cpu}' 2>/dev/null)
+MEM_LIM=$(kubectl get deployment deployment-rohirrim -n rohan -o jsonpath='{.spec.template.spec.containers[0].resources.limits.memory}' 2>/dev/null)
+
+if [ "$CPU_REQ" != "50m" ] || [ "$MEM_REQ" != "64Mi" ]; then
+    echo "❌ Deployment is missing or has incorrect resource requests (found CPU: $CPU_REQ, Mem: $MEM_REQ)."
+    echo "   Need requests: cpu=50m, memory=64Mi."
+    exit 1
+fi
+if [ "$CPU_LIM" != "200m" ] || [ "$MEM_LIM" != "256Mi" ]; then
+    echo "❌ Deployment is missing or has incorrect resource limits (found CPU: $CPU_LIM, Mem: $MEM_LIM)."
+    echo "   Need limits: cpu=200m, memory=256Mi."
+    exit 1
+fi
+echo "✅ Resource requests and limits configured correctly"
+
+# Check Deployment has at least 5 ready replicas
+READY_REPLICAS=$(kubectl get deployment deployment-rohirrim -n rohan -o jsonpath='{.status.readyReplicas}' 2>/dev/null)
+if [ -z "$READY_REPLICAS" ] || [ "$READY_REPLICAS" -lt 5 ]; then
+    echo "❌ Deployment 'deployment-rohirrim' has only ${READY_REPLICAS:-0} ready scouts. Need at least 5."
+    exit 1
+fi
+echo "✅ ${READY_REPLICAS} scouts standing ready under the muster"
+
+# Check pods exist in rohan namespace matching the deployment
+POD_COUNT=$(kubectl get pods -n rohan -l app=deployment-rohirrim 2>/dev/null | tail -n +2 | wc -l)
+if [ "$POD_COUNT" -lt 5 ]; then
+    echo "❌ Only $POD_COUNT scout Pods found under 'deployment-rohirrim'. Need at least 5."
+    exit 1
+fi
+echo "✅ ${POD_COUNT} scouts verified across the rohan realm"
+
+# All checks passed - update stage
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "UPDATE stages SET stage_completed = 2 WHERE user_id = $DBID;"
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR IGNORE INTO users VALUES ($DBID);"
+
+echo ""
+echo "**************************************"
+echo "** Stage 2 (The Muster of Rohan) completed! **"
+echo "**************************************"
+echo ""
+
+cat /usr/local/bin/middle_earth/data/reward_2.txt
+echo ""
+
+read -n 1 -r -s -p "Press any key to continue..." key
+welcome
+exit 0

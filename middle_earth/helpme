@@ -1,0 +1,75 @@
+#!/bin/bash
+
+trap '' 2
+
+function keypause () {
+
+        read -n 1 -r -s -p "Press any key to continue..." key
+}
+
+
+BOLD=$(tput bold)
+NORMAL=$(tput sgr0)
+
+SRC=/usr/local/bin/middle_earth
+DATA=$SRC/data
+USER=`whoami`
+DBID=$(( `id -u` + 1000))
+STAGE_COMPLETED=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT stage_completed FROM stages WHERE user_id = $DBID;"`
+
+SAMPORT=$(( $DBID + 1))
+PIPPINPORT=$(( $DBID + 2))
+FRODOPORT=$(( $DBID + 3))
+MERRYPORT=$(( $DBID + 4))
+RIVENDEL_PORT=$(( $DBID + 20000))
+
+clear
+STAGE=$(( $STAGE_COMPLETED + 1 ))
+
+case $STAGE in
+
+	1) 
+		echo "${BOLD}Stage 1: The Lighting of the Beacons${NORMAL}"
+		showlines $DATA/help_1.txt
+                echo ""
+		;;
+	2) 
+		echo "${BOLD}Stage 2: The Muster of Rohan${NORMAL}"
+		showlines $DATA/help_2.txt
+                echo ""
+		;;
+	3) 
+		echo "${BOLD}Stage 3: The Paths of the Dead${NORMAL}"
+                showlines $DATA/help_3.txt
+                echo ""
+                ;;
+
+	4) 
+		echo "${BOLD}Stage 4: The Battle of Pelennor Fields${NORMAL}"
+		showlines $DATA/help_4.txt
+                echo ""
+                ;;
+
+	5) 
+		echo "${BOLD}Stage 5: The Tower of Cirith Ungol${NORMAL}"
+		showlines $DATA/help_5.txt
+                echo ""
+                ;;
+	6) 
+		echo "${BOLD}Stage 6: The Black Gate${NORMAL}"
+		showlines $DATA/help_6.txt
+                echo ""
+                ;;
+	7) 
+		echo "${BOLD}Stage 7: The Fires of Mount Doom${NORMAL}"
+		showlines $DATA/help_7.txt
+                echo ""
+                ;;
+	8) 
+		echo "${BOLD}Stage 8: The Coronation — Helm${NORMAL}"
+		showlines $DATA/help_8.txt
+                echo ""
+		exit 
+                ;;
+
+esac

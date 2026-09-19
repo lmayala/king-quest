@@ -1,0 +1,10 @@
+Aragorn returns from the Paths of the Dead with his oath-token in hand and the words of calling on his lips. The dead armies answer his summons, turning back the shadow at the Battle of Pelennor Fields.
+
+He carries two kinds of power: the Secret that only he knows, and the ConfigMap that everyone may read. Together they are enough to save Minas Tirith — for now.
+
+But Sauron watches the roads. His towers stand tall along every path. The enemy sees every movement, every connection, every route taken between realms. To pass through, you must establish guarded routes with proper access control.
+
+Prepare your command structure. Your forces will soon stretch far beyond what fits in a single cluster.
+
+STAGE COMPLETE
+PRESS ANY KEY TO CONTINUE

@@ -1,0 +1,53 @@
+=== STAGE 2: THE MUSTER OF ROHAN ===
+
+Théoden King gathers the Rohirrim at Dunharrow. Ten thousand riders
+answer the call of the beacons, but an army without order is no army
+at all. Every regiment must stand ready, and if one falls, another must
+take their place before the journey begins.
+
+In Kubernetes terms, this is what a **Deployment** provides. A Deployment
+is a controller that declares how many identical Pods you want running,
+and it constantly checks: are my scouts deployed? Are they running? Is
+the number correct? It maintains the state you ask for.
+
+But resources are scarce. To prevent a single regiment from consuming all
+provisions (CPU and Memory) and starving the rest of the army, the King
+demands that you set explicit resource requests and limits on your template.
+
+OBJECTIVE:
+
+Organize the Rohan muster by creating a Deployment in the 'rohan' realm
+that manages multiple scouts simultaneously with strict resource boundaries.
+
+REQUIRED SETUP:
+
+Namespace:    'rohan'                          (already exists)
+Deployment:   'deployment-rohirrim'
+Image:        nginx                            (lightweight messenger scout)
+Replicas:     5                                (five companies of horsemen)
+
+Resource Constraints:
+  - CPU Request:    50m   /  Memory Request:  64Mi
+  - CPU Limit:     200m   /  Memory Limit:   256Mi
+
+GUIDANCE:
+
+1. Create a new Deployment called 'deployment-rohirrim' using the image
+   'nginx'. Set it to maintain exactly 5 replicas, and add resource requests
+   and limits using kubectl create with --dry-run or editing a YAML file.
+
+   Note: Standard kubectl create does not support setting resource limits
+   directly via flags. You may need to export the configuration to YAML first,
+   edit the resources section in the container spec, and then apply it.
+
+2. Verify your Deployment is working. List everything in the 'rohan'
+   namespace — you should see both the Deployment object and the Pods
+   it manages. Ask: how many objects did kubectl show? Which ones are
+   the Pods and which one is the Deployment?
+
+3. Verify resource limits are active. Run 'kubectl describe deployment
+   deployment-rohirrim -n rohan' and confirm that the Limits and Requests
+   sections match the King's demands.
+
+When your Deployment manages five active scouts with proper resource limits
+in the 'rohan' realm, run 'check_muster' to validate the muster's readiness.

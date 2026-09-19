@@ -1,0 +1,23 @@
+The Ring is unmade. The fires of Mount Doom consumed it, and the
+shadow that stretched across Middle-earth for an Age has lifted.
+
+The Eye is blind. The Tower falls. The Nazgûl dissolve like mist
+before the dawn. The armies of Mordor scatter, leaderless, their
+will broken with the Ring that bound them.
+
+But the watch does not end. The CronJob still turns, minute by
+minute, writing its log — a record that the darkness will not
+return unnoticed. The Job is done, but the watch remains.
+
+Frodo and Sam are carried home on eagle's wings. The Shire will
+heal. The King returns. The Fourth Age begins.
+
+You have learned to build systems that end when their purpose is
+fulfilled, and systems that watch forever. You have wielded Jobs
+and CronJobs as they were meant: one for the final act, one for
+the eternal vigil.
+
+The Fourth Age is yours to build. Go now — the Shire awaits.
+
+STAGE COMPLETE
+PRESS ANY KEY TO CONTINUE

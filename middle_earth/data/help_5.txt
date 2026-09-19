@@ -1,0 +1,71 @@
+=== STAGE 5: THE TOWER OF CIRITH UNGOL ===
+
+The Tower of Cirith Ungol stands silent on the grim border.
+Sam has hidden Frodo within its depths and written down the coordinates —
+coordinates the tower must keep safe even if its guards are slain.
+
+But Cirith Ungol's garrison is transient. Orcs fall. New guards are
+recruited. The buildings must endure even as their inhabitants are
+replaced. That meant carving into stone: persistent storage that survives
+rewriting.
+
+In K8s, a Deployment creates interchangeable Pods with random identities.
+But the Tower's journal may not be lost when a guard falls. What should
+use a StatefulSet so that if frodo-keep-0 dies, frodo-keep-0 comes back
+to life with the same name and the same scroll mounted in place.
+
+OBJECTIVE:
+
+Create a set of Orc Tower keeps with identity and persistence that survive
+pod death.
+
+REQUIRED SETUP:
+
+Namespace:        'cirith-ungol'                 (new realm)
+
+StatefulSet:      'frodo-keep'
+  Replicas:       2                             (two guards)
+  Image:          nginx
+  Volume:         /var/journal                   (inside each pod)
+  Storage:         PersistungVolume (small: 10Mi is enough)
+
+Journal file:     /var/journal/entry.txt  in BOTH pods
+  Content:        "Though the shadow lies heavy, hope remains."
+
+GUIDANCE:
+
+1. Create the 'cirith-ungol' namespace.
+
+2. Build your StatefulSet manifest:
+   - apiVersion: apps/v1
+   - kind: StatefulSet
+   - spec.serviceName must be set (e.g., "frodo-keep")
+   - Define spec.volumeClaimTemplates with a PVC claim of ~10Mi
+   - Define .spec.template.spec.containers[0].volumeMounts so the PVC
+     is attached at /var/journal
+
+3. Apply the YAML. Watch frodo-keep-0 and frodo-keep-1 come up.
+
+4. Exec into each and write the required message:
+      kubectl exec frodo-keep-0 -n cirith-ungol -- \
+        sh -c "mkdir -p /var/journal && echo '...' > /var/journal/entry.txt"
+   ...and repeat for frodo-keep-1.
+
+5. Now test immortality:
+   kubectl delete pod frodo-keep-0 -n cirith-ungol
+   The pods disappear — but look again. The StatefulSet spawns frodo-keep-0
+   automatically, with the same ordinal identity.
+
+6. Verify persistence:
+      kubectl exec frodo-keep-0 -n cirith-ungol -- cat /var/journal/entry.txt
+   The message must be there even though the pod was killed.
+
+TIPS:
+
+- StatefulSets create pods in order (0, 1, 2...) and delete them in reverse.
+- Use kubectl get pods -n cirith-ungol --watch to watch re-spawn.
+- StatefulSets fundamentally differ from Deployments: identity is stable,
+  not random. That coupled with PVC = persistent naming + storage.
+
+When frodo-keep's two pods both carry /var/journal/entry.txt with the
+required words, run "check_cirith" to prove the garrison endures.

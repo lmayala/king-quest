@@ -1,0 +1,34 @@
+#!/bin/bash
+
+FILE=$1
+shift 1
+
+for VAR in "$@"; do
+    export "$VAR"
+done
+
+if [ -z "$DELAY" ]; then
+    DELAY=0.1
+fi
+
+exec 3< "$FILE"
+
+trap '' INT TERM
+
+echo ""
+stty -icanon -echo
+
+while IFS= read -r CMD <&3; do
+    if [ "$EVAL" = "true" ]; then
+        eval "echo \"$CMD\""
+    else
+        echo "$CMD"
+    fi
+
+    sleep "$DELAY"
+done
+while read -r -t 0 _; do read -r _ ; done  # drena el buffer
+stty sane
+
+trap - INT TERM
+exec 3<&-

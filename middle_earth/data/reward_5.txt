@@ -1,0 +1,22 @@
+Even as the journey takes them beyond the mountains, Tolkien's words echo.
+
+Orcs fall. Towers crumble. But the message survives — written not on
+fading paper, but in volumes that will outlive every passing generation.
+
+The Tower of Cirith Ungol has shown you the final lesson of persistence:
+identity and storage. When something must outlast its bearer, the
+StatefulSet with its PVC becomes a fortress the ages cannot crumble.
+
+Each pod in your set is Ardhelm — a stone in the wall that stands alone,
+yet knows its number, knows its place, and keeps the message named in
+its scrolls intact through every storm.
+
+The trail continues downward. The Black Gate has been reached.
+Aragorn stands at the gates of Mordor, held by defenders that must
+detect their leader's presence, respond to every status/health check.
+A sickness, a life — a probe.
+
+Now you must keep the pace between health and silence, signal and shadow.
+
+STAGE COMPLETE
+PRESS ANY KEY TO CONTINUE

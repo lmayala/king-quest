@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# King Quest Stage 1 Validation: The Lighting of the Beacons
+# Verifies namespaces 'gondor' and 'rohan' exist with all beacon pods running and correctly labeled
+
+DBID=$(( `id -u` + 1000))
+
+# Check if Stage 1 is already completed
+CURRENT_STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT COALESCE(stage_completed, 0) FROM stages WHERE user_id = $DBID;"`
+if [ "$CURRENT_STAGE" -ge 1 ]; then
+    echo "Stage 1 already completed. Run 'welcome' to continue."
+    exit 0
+fi
+
+echo "Verifying the beacons of Gondor and Rohan..."
+
+# Check gondor namespace exists
+if ! kubectl get namespace gondor >/dev/null 2>&1; then
+    echo "❌ Realm 'gondor' not found. Create it with: kubectl create namespace gondor"
+    exit 1
+fi
+echo "✅ Realm 'gondor' established"
+
+# Check rohan namespace exists
+if ! kubectl get namespace rohan >/dev/null 2>&1; then
+    echo "❌ Realm 'rohan' not found. Create it with: kubectl create namespace rohan"
+    exit 1
+fi
+echo "✅ Realm 'rohan' established"
+
+# Verify all Gondor beacons (7 mountain peaks + Minas Tirith)
+GONDOR_BEACONS=(beacon-minas-tirith beacon-amon-din beacon-eilenach beacon-nardol beacon-erelas beacon-min-rimmon beacon-calenhad beacon-halifirien)
+GONDOR_NAMES=("Minas Tirith (White City)" "Amon Dîn (highest peak)" "Eilenach (western watchpost)" "Nardol (crossings of Poros)" "Erelas (Lebethron fields)" "Min-Rimmon (Meringue sentinel)" "Calenhad (Great Plain)" "Halifirien (oath hill)")
+
+for i in "${!GONDOR_BEACONS[@]}"; do
+    NAME=${GONDOR_NAMES[$i]}
+    BEACON_NAME=${GONDOR_BEACONS[$i]}
+    STATUS=$(kubectl get pod $BEACON_NAME -n gondor -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
+    if [ "$STATUS" != "Running" ]; then
+        echo "❌ Beacon '$BEACON_NAME' ($NAME) in 'gondor' realm is not Running (status: $STATUS)"
+        exit 1
+    fi
+    
+    # Validate label
+    LABEL=$(kubectl get pod $BEACON_NAME -n gondor -o jsonpath='{.metadata.labels.realm}' 2>/dev/null)
+    if [ "$LABEL" != "gondor" ]; then
+        echo "❌ Beacon '$BEACON_NAME' is missing the required label 'realm=gondor' (found: realm=$LABEL)"
+        exit 1
+    fi
+    echo "✅ Beacon '$BEACON_NAME' burning and labeled — $NAME"
+done
+
+# Verify Rohan beacon
+ROHAN_BEACON_NAME="beacon-edoras"
+ROHAN_STATUS=$(kubectl get pod $ROHAN_BEACON_NAME -n rohan -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
+if [ "$ROHAN_STATUS" != "Running" ]; then
+    echo "❌ Beacon '$ROHAN_BEACON_NAME' (Edoras) in 'rohan' realm is not Running (status: $ROHAN_STATUS)"
+    exit 1
+fi
+
+# Validate label
+LABEL=$(kubectl get pod $ROHAN_BEACON_NAME -n rohan -o jsonpath='{.metadata.labels.realm}' 2>/dev/null)
+if [ "$LABEL" != "rohan" ]; then
+    echo "❌ Beacon '$ROHAN_BEACON_NAME' is missing the required label 'realm=rohan' (found: realm=$LABEL)"
+    exit 1
+fi
+echo "✅ Beacon '$ROHAN_BEACON_NAME' burning and labeled — Edoras"
+
+# All checks passed - update stage
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR REPLACE INTO stages VALUES ($DBID, 1);"
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR IGNORE INTO users VALUES ($DBID);"
+
+echo ""
+echo "*****************************************************"
+echo "** Stage 1 (The Lighting of the Beacons) completed! **"
+echo "*****************************************************"
+echo ""
+
+cat /usr/local/bin/middle_earth/data/reward_1.txt
+echo ""
+
+read -n 1 -r -s -p "Press any key to continue..." key
+welcome
+exit 0

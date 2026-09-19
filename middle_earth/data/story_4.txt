@@ -1,0 +1,16 @@
+The armies of Mordor stand before Minas Tirith. Hundreds of spears
+at the ready, thousands of orcs, trolls and siege-engines lining
+up in the fields below. But an army of one thousand scouts can be
+overwhelmed by the enemy's numbers.
+
+To survive, the defenders must find a way to balance their forces
+across every watch-point. No single gate can hold them all forever.
+The beacons are burning. The rohirrim are ready. But unless the
+alarms are shared across all seven gates, the city falls.
+
+Your task: spread the defense across multiple scouts. Ensure that
+if one falls, the signal still reaches Minas Tirith. Scale your
+formations to handle the incoming tide, or the walls will fall.
+
+This is the final test before the last charge: you must prove that
+Minas Tirith can endure long enough for the King to return.

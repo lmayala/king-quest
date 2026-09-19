@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# King Quest Stage 3 Validation: The Paths of the Dead
+# Verifies Secret, ConfigMap, and Pod are properly configured in gondor
+
+DBID=$(( `id -u` + 1000))
+
+# Check if Stage 3 is already completed
+CURRENT_STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT COALESCE(stage_completed, 0) FROM stages WHERE user_id = $DBID;"`
+if [ "$CURRENT_STAGE" -ge 3 ]; then
+    echo "Stage 3 already completed. Run 'welcome' to continue."
+    exit 0
+fi
+
+echo "Checking Aragorn's equipment for the Paths of the Dead..."
+
+# Check gondor namespace exists
+if ! kubectl get namespace gondor >/dev/null 2>&1; then
+    echo "❌ Realm 'gondor' not found."
+    exit 1
+fi
+echo "✅ Realm 'gondor' established"
+
+# Check Secret exists with correct data
+SECRET_TOKEN=$(kubectl get secret secret-oath-token -n gondor -o jsonpath='{.data.token}' 2>/dev/null)
+if [ -z "$SECRET_TOKEN" ]; then
+    echo "❌ Secret 'secret-oath-token' not found or missing key 'token'."
+    exit 1
+fi
+echo "✅ Secret 'secret-oath-token' carries hidden intelligence"
+
+# Check ConfigMap exists with correct data
+CM_WORDS=$(kubectl get configmap configmap-words-of-calling -n gondor -o jsonpath='{.data.words}' 2>/dev/null)
+if [ -z "$CM_WORDS" ]; then
+    echo "❌ ConfigMap 'configmap-words-of-calling' not found or missing key 'words'."
+    exit 1
+fi
+echo "✅ ConfigMap 'configmap-words-of-calling' carries open knowledge"
+
+# Check Pod exists and is Running (find by name prefix)
+POD_NAME=$(kubectl get pod -n gondor -l app=beacon-palantir -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+if [ -z "$POD_NAME" ]; then
+    echo "❌ Scout 'beacon-palantir' not found in gondor namespace."
+    exit 1
+fi
+
+POD_STATUS=$(kubectl get pod $POD_NAME -n gondor -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
+if [ "$POD_STATUS" != "Running" ]; then
+    echo "❌ Scout 'beacon-palantir' not Running (status: $POD_STATUS)."
+    exit 1
+fi
+echo "✅ Scout 'beacon-palantir' ($POD_NAME) deployed"
+
+# Verify Secret is injected as env var OATH_TOKEN
+OATH_ENV=$(kubectl exec $POD_NAME -n gondor -- env | grep "^OATH_TOKEN=" 2>/dev/null | cut -d= -f2)
+if [ -z "$OATH_ENV" ]; then
+    echo "❌ Scout does not have OATH_TOKEN environment variable from the Secret."
+    exit 1
+fi
+echo "✅ Scout carries OATH_TOKEN from the Secret"
+
+# Verify ConfigMap is mounted at /etc/calling
+if ! kubectl exec $POD_NAME -n gondor -- test -f /etc/calling/words 2>/dev/null; then
+    echo "❌ Scout does not have ConfigMap mounted at /etc/calling."
+    exit 1
+fi
+echo "✅ Scout has ConfigMap mounted at /etc/calling"
+
+# All checks passed - update stage
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "UPDATE stages SET stage_completed = 3 WHERE user_id = $DBID;"
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR IGNORE INTO users VALUES ($DBID);"
+
+echo ""
+echo "************************************************************"
+echo "** Stage 3 (The Paths of the Dead) completed! **"
+echo "************************************************************"
+echo ""
+
+cat /usr/local/bin/middle_earth/data/reward_3.txt
+echo ""
+
+read -n 1 -r -s -p "Press any key to continue..." key
+welcome
+exit 0

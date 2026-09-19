@@ -1,0 +1,32 @@
+The Ring is destroyed. The fire has consumed it.
+Mt. Doom is falling. The Shadow passes from Middle-earth.
+
+The armies of the West won their desperate stand. Your probes
+watched the line that held. Your autoscaling met every surge.
+The enemy broke upon the defenses before them.
+
+Gondor defended the realm not by staying within its walls,
+but by extending its hand to others. The same must be done with
+Kubernetes: checks on checkers, lingering it on scale for war.
+
+The Final Stand of the West has decided the war.
+You formed regiments. You observed every patrol until the breakthrough.
+You called for reinforcements when the enemy pushed hardest.
+
+The Shire will come next. Not for war this time —
+for home. For __boxes of records, the harvest, the roads and hedges.
+For living.
+
+We have won the battles.
+Now we will see how it starts again.
+
+Stories end, but they're never over.
+They just close one path to keep you traveling...
+
+And now, builder of these walls, you have the tools to define and protect
+everything in your own kingdom.
+The last step is waiting. The planning becomes clear.
+Will you step onto it?
+
+STAGE COMPLETE
+PRESS ANY KEY TO CONTINUE
