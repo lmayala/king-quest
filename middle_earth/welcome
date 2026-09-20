@@ -125,3 +125,4 @@ clear
 helpme
 keypause
 echo ""
+exit 0

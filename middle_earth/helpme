@@ -1,10 +1,9 @@
 #!/bin/bash
-
 trap '' 2
 
 function keypause () {
 
-        read -n 1 -r -s -p "Press any key to continue..." key
+	read -n 1 -r -s -p "Press any key to continue..." key
 }
 
 
@@ -59,7 +58,7 @@ case $STAGE in
 		echo "${BOLD}Stage 6: The Black Gate${NORMAL}"
 		showlines $DATA/help_6.txt
                 echo ""
-                ;;
+		;;
 	7) 
 		echo "${BOLD}Stage 7: The Fires of Mount Doom${NORMAL}"
 		showlines $DATA/help_7.txt
@@ -69,7 +68,13 @@ case $STAGE in
 		echo "${BOLD}Stage 8: The Coronation — Helm${NORMAL}"
 		showlines $DATA/help_8.txt
                 echo ""
-		exit 
+		exit
+                ;;
+	*)
+		clear
+		echo "Invalid stage ($STAGE). Check with the administrator"
+                echo ""
+                exit
                 ;;
 
 esac

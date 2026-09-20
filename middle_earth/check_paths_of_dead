@@ -68,7 +68,6 @@ echo "✅ Scout has ConfigMap mounted at /etc/calling"
 
 # All checks passed - update stage
 sqlite3 /usr/local/lib/middle_earth/middle_earth.db "UPDATE stages SET stage_completed = 3 WHERE user_id = $DBID;"
-sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR IGNORE INTO users VALUES ($DBID);"
 
 echo ""
 echo "************************************************************"

@@ -67,8 +67,7 @@ fi
 echo "✅ Beacon '$ROHAN_BEACON_NAME' burning and labeled — Edoras"
 
 # All checks passed - update stage
-sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR REPLACE INTO stages VALUES ($DBID, 1);"
-sqlite3 /usr/local/lib/middle_earth/middle_earth.db "INSERT OR IGNORE INTO users VALUES ($DBID);"
+sqlite3 /usr/local/lib/middle_earth/middle_earth.db "UPDATE stages SET stage_completed = 1 WHERE user_id = $DBID;"
 
 echo ""
 echo "*****************************************************"
