@@ -76,7 +76,7 @@ while true; do
         echo "**                  IMPORTANT TIP:                        **"
         echo "**                                                        **"
         echo "**   In case you exit the game, you can resume it with    **"
-        echo "**   docker exec -it -u <your_username> lotr /bin/bash    **"
+        echo "**   docker exec -it -u <your_username> king-quest /bin/bash    **"
         echo "**                                                        **"
         echo "**                                                        **"
         echo "************************************************************"
@@ -108,7 +108,7 @@ else
     fi
     echo "*****************************************************************"
     echo "*  To resume the game, reconnect with:                         *"
-    echo "*    docker exec -it -u $name lotr /bin/bash                   *"
+    echo "*    docker exec -it -u $name king-quest /bin/bash                   *"
     echo "*  You were at Stage $NEXT_STAGE. Use 'helpme' for instructions.  *"
     echo "*****************************************************************"
 fi

@@ -119,3 +119,26 @@ if [ $? -eq 1 ]
 then
     exit
 fi
+
+trap '
+DBID=$(( `id -u` + 1000))
+name=$(whoami)
+CURRENT_STAGE=`sqlite3 /usr/local/lib/middle_earth/middle_earth.db "PRAGMA foreign_keys = ON; SELECT stage_completed + 1 FROM stages WHERE user_id = $DBID;"`
+if [ "$CURRENT_STAGE" -ge 8 ]; then
+    echo "*****************************************************************"
+    echo "*  Farewell, $name! The Ring is destroyed. The Crown is forged.  *"
+    echo "*  Frodo has reached Mount Doom and completed his mission.      *"
+    echo "*  Your journey through Middle-earth'\''s defenses is complete.      *"
+    echo "*                                                                *"
+    echo "*  The Kingdom is rebuilt. Its systems are governed as code.      *"
+    echo "*  Helm has managed your realm so you can lead the way.           *"
+    echo "*  Farewell — may your journey home be swift and noble.          *"
+    echo "*****************************************************************"
+else
+    echo "*****************************************************************"
+    echo "*  To resume the game, reconnect with:                         *"
+    echo "*    docker exec -it -u $name king-quest /bin/bash             *"
+    echo "*  You were at Stage $CURRENT_STAGE. Use '\''helpme'\'' for instructions.  *"
+    echo "*****************************************************************"
+fi
+' EXIT
