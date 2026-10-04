@@ -1,18 +1,9 @@
-The Black Gate breaks. Now nothing stands between you and the
-Fire. Frodo and Sam walk the final mile to the Crack of Doom.
-The Ring must be destroyed — not by armies, but by a single,
-decisive act carried to its end.
+The Black Gate breaks. Now nothing stands between you and the Fire. Frodo and Sam walk the final mile to the Crack of Doom. The Ring must be destroyed — not by armies, but by a single, decisive act carried to its end.
 
 This is the last work of war. Not defense. Not preparation. Completion.
 
-The Ring must be cast into the Cracks of Doom. It cannot be
-carried further, only finished. The tool for such a task is not
-an army that stands guard, but a command issued once and executed
-to completion. A Job that runs once, finishes, and never repeats.
-A CronJob that watches the aftermath, ensuring the silence holds.
+The Ring must be cast into the Cracks of Doom. It cannot be carried further, only finished. The tool for such a task is not an army that stands guard, but a command issued once and executed to completion. A Job that runs once, finishes, and never repeats. A CronJob that watches the aftermath, ensuring the silence holds.
 
-This lesson is learned: some work must end. And when it ends,
-the record of its ending must persist.
+This lesson is learned: some work must end. And when it ends, the record of its ending must persist.
 
-But the war's end is not the story's end. The King returns.
-The Crown awaits.
+But the war's end is not the story's end. The King returns. The Crown awaits.

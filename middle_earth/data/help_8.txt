@@ -46,7 +46,7 @@ REQUIRED SETUP:
 5. **Package and install**:
    ```
    helm package coronation
-   helm install aragorn coronation-<version>.tgz --create-namespace --namespace gונדור
+   helm install aragorn coronation-<version>.tgz --create-namespace --namespace gondor
    ```
 
 5. **Verify the release**:

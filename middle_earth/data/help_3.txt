@@ -10,12 +10,12 @@ Carry hidden intelligence and open commands through the Paths of the Dead. You n
 
 REQUIRED SETUP:
 
-Namespace:    'gondor'                          (already exists)
-Secret:       'secret-oath-token'               key: token → value: barahir-ring
-ConfigMap:    'configmap-words-of-calling'      key: words → value: summon-the-dead
-Pod:          'beacon-palantir'                 image: nginx
-                                              Secret injected as environment variable OATH_TOKEN
-                                              ConfigMap mounted at /etc/calling
+Namespace: 'gondor' (already exists)
+Secret: 'secret-oath-token' key: token → value: barahir-ring
+ConfigMap: 'configmap-words-of-calling' key: words → value: summon-the-dead
+Deployment: 'beacon-palantir-army' image: nginx, replicas: 1
+
+Your scout must carry the label 'app=beacon-palantir' so it can be discovered by name.
 
 GUIDANCE:
 
@@ -23,11 +23,12 @@ GUIDANCE:
 
 2. Create the ConfigMap using kubectl create configmap with --from-literal to store the words of calling. This ConfigMap also lives inside the gondor namespace. Anyone in that realm may read these words.
 
-3. Deploy a scout named 'beacon-palantir' in the gondor namespace running image nginx. Configure it so that:
-   - The environment variable OATH_TOKEN comes from the Secret's token key.
-   - A volume mounts the ConfigMap's data under /etc/calling.
+3. Create a Deployment named 'beacon-palantir-army' in the gondor namespace. Your Pod template must have these labels:
+   - app: beacon-palantir
+   - The ConfigMap mounted as a volume at /etc/calling
+   - The Secret injected as environment variable OATH_TOKEN
 
-4. Inspect the scout with 'kubectl describe pod beacon-palantir -n gondor'. In the Events section, you should see references to the Secret and ConfigMap. In the Environment Variables section, OATH_TOKEN should appear. Under Volumes you should see the ConfigMap mount.
+4. Inspect the scout with 'kubectl describe deployment beacon-palantir-army -n gondor'. In the Events section, you should see references to the Secret and ConfigMap. Run 'kubectl get pods -n gondor -l app=beacon-palantir' to verify it exists.
 
 5. Execute a command on the scout to verify its cargo. Run: kubectl exec <pod-name> -n gondor -- cat /etc/calling/words to confirm the ConfigMap was mounted. Run: kubectl exec <pod-name> -n gondor -- env | grep OATH_TOKEN to confirm the Secret was injected.
 

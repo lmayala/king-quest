@@ -1,23 +1,9 @@
-The plains before the Black Gate are silent. But within,
-the enemies maneuver — sentries slipping through shadow,
-soldiers falling in the wastes. The Captain cannot be everywhere,
-but he knows which watchmen still stand and which have vanished
-from the line.
+The plains before the Black Gate are silent. But within, the enemies maneuver — sentries slipping through shadow, soldiers falling in the wastes. The Captain cannot be everywhere, but he knows which watchmen still stand and which have vanished from the line.
 
-Some soldiers pretend to serve, but inside the fort there is no
-life. The darkness has consumed them. A sentry who falls is
-heard. A silent sentinel is invisible to the watchful eye.
+Some soldiers pretend to serve, but inside the fort there is no life. The darkness has consumed them. A sentry who falls is heard. A silent sentinel is invisible to the watchful eye.
 
-At the Black Gate, both kinds of failure must be monitored:
-the sentry who has fallen (external probe finds no one there),
-and the sentry who stands but cannot yet receive commands
-(internal confusion must be detected early).
+At the Black Gate, both kinds of failure must be monitored: the sentry who has fallen (external probe finds no one there), and the sentry who stands but cannot yet receive commands (internal confusion must be detected early).
 
-This is the work of Liveness Probes and Readiness Probes —
-the first tells of death in combat, the second tells of confusion
-before taking the field. And when the enemy grows stronger,
-more guards appear automatically from the reserve lines.
+This is the work of Liveness Probes and Readiness Probes — the first tells of death in combat, the second tells of confusion before taking the field. And when the enemy grows stronger, more guards appear automatically from the reserve lines.
 
-The Black Gate is prepared. The wall holds, the scouts stand
-vigilant, and the army grows when the threat grows. Now you
-teach you how to fight as one — and shift the tide back east.
+The Black Gate is prepared. The wall holds, the scouts stand vigilant, and the army grows when the threat grows. Now you teach you how to fight as one — and shift the tide back east.

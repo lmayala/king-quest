@@ -1,7 +1,7 @@
 === STAGE 6: THE BLACK GATE ===
 
 Aragorn's forces march to the doors of Mordor. But the Gate will test them.
-Saurons's Eye watches without ceasing. Any guard who falls silent draws
+Sauron's Eye watches without ceasing. Any guard who falls silent draws
 the Enemy's full attention. Any scout unprepared to answer commands
 weakens the wall.
 
@@ -15,7 +15,7 @@ removed from service endpoints.
 And when Black Gate cracks and more wargs swarm Western Plains,
 you need HPA's auto-reinforcements: when CPU fills, reinforcements arrive.
 
-Now Aragorn must reveal his true strategy. He configures:'
+Now Aragorn must reveal his true strategy. He configures:" 
 - Liveness probes — keep the firewall of Gondor living.
 - Readiness probes — stop pods from sending traffic errors.
 
@@ -29,37 +29,31 @@ resource consumption boundaries and a check for vital signs and response.
 
 REQUIRED SETUP:
 
-Namespace: 'black-door'       (create this now)
+Namespace:    'black-gate'       (create this now)
 
-Defensive Pod ("deployment-line"):
+Defensive Deployment (named 'defense-line'):
+    Replicas: 2 (initial line)
     Image: nginx
     CPU limit: 500m / Request: 100m
     Memory limit: 128Mi / Request: 32Mi
     
-Probes for pod:
+Probes for Deployment:
   liveness: httpGet path /health  port 8080 period 5s
   readiness: httpGet path /ready port 8080 period 3s
 
-And add HPA:
-- Name: line-reinforcements
-- Target: Deployment 'deployment-line'
-- Min: 1
+And add HPA to scale when mocked loads occur:
+- Name: line-reinforcements (or any valid name)
+- Target: Deployment 'defense-line'
+- Min: 2
 - Max: 5
 - CPU Thresh: 60%
 
 TESTING IT:
-Run a NGINX pod with liveness and readiness checks.
-Then kill it to make sure liveness works. Add more to see if HPA starts.
-All tests pass — the ladyen Pod with specs survives.
+Create the Deployment with both liveness and readiness probes.
+Use the HTTP /health and /ready endpoints on port 8080.
+Verify it works by checking the Deployment spec shows both probes.
 
-GUIDE:
-inspect a list of probes: kubectl get deploy/deploy-line -n black-door -o jsonpath='{.spec.template.spec.containers[0]}'
-- It should show, at least, "livenessProbe" and "readinessProbe" entries.
-- Check the HPA YAML for scaleTargetRef and minReplica and maxReplica values.
+Kill one Pod to simulate a sentry falling — watch the Deployment recover.
+Scale to mock pressure and watch HPA spawn reinforcements.
 
-COMMANDS EXAMPLE:
-- kubectl create ns black-door
-- kubectl create deployment defense-line --image=nginx -n black-door --dry-run=client -o yaml | kubectl apply -f -
-- then patch it to add resources and probes.
-
-When tests pass with resilience scored — logs of successful liveliness and readiness probes, and HPA standing ready to scale — call 'check_black_gate' to seal the gap.
+When the Deployment holds steady and HPA stands ready, run 'check_black_gate' to seal the gap.

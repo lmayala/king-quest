@@ -1,19 +1,7 @@
-The Ring is gone. The Enemy is fallen. The Black Gate collapses.
-Minas Tirith stands quiet under a new sunrise.
+The Ring is gone. The Enemy is fallen. The Black Gate collapses. Minas Tirith is no longer threatened.
 
-Aragorn stands before the White Tree. The crown of Elendil is
-brought forth. The standard of the King unfurls. The city does
-not just cheer — it organizes. A kingdom must be governed.
+The crown is placed upon Aragorn's head. The Age of the Ring has ended. The age of rebuilding begins.
 
-What was built for war must now serve peace. The infrastructure
-that held the line must now serve the realm: configurable,
-repeatable, versioned. The tools of war become the tools of
-governance.
+But a kingdom must be governed by more than just a king's decree. The realm needs systems, governed by rules, that can be managed, updated, and shared across generations. Just as the Crown must be renewed, so too must the systems that support it.
 
-Helm charts. Values files. Releases. Rollbacks. The King's
-decrees, codified and deployable across every realm of the
-Reunited Kingdom.
-
-This is the final lesson: infrastructure that served war
-must now serve peace — and it must be manageable by those
-who come after.
+Helm charts, repositories, deployments — these are the tools of the new age. The King's Grabaciones must be codified, versioned, and managed just like any other system. This is the final lesson: you must govern what you have built, not just dispose of it, but govern it wisely.
